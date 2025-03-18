@@ -68,3 +68,26 @@ todosIguales [] = True
 todosIguales [x] = True
 todosIguales (x:y:xs) | x == y && todosIguales(y:xs) = True
                       | otherwise = False
+
+data AB a = Nil | Bin (AB a) a (AB a)
+
+vacioAB :: AB a -> Bool 
+vacioAB Nil = True
+vacioAB _ = False
+
+negacionAB :: AB Bool -> AB Bool
+negacionAB Nil = Nil
+negacionAB (Bin izq a der) = Bin (negacionAB izq) (not a) (negacionAB der)
+
+productoAB :: AB Int -> Int 
+productoAB Nil = 0
+productoAB (Bin izq a der) = productoLista (inorden (Bin izq a der)) 
+
+productoLista :: [Int] -> Int
+productoLista [x] = x
+productoLista (x:xs) = x * productoLista(xs)
+
+inorden :: AB Int -> [Int]
+inorden Nil = []
+inorden (Bin izq a der) = (inorden izq) ++ [a] ++ (inorden der)
+
