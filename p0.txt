@@ -1,0 +1,28 @@
+La funcion null del módulo Prelude es de tipo null :: Foldable t => t a -> Bool según la llamada :type null.
+Su funcionalidad es verificar si la estructura que toma como entrada es nula (vacia), está pensada para estructuras a las que se puede acceder
+a su primer elemento en tiempo constante.
+
+La funcion head es de tipo head :: HasCallStack => [a] -> a y es una funcion PARCIAL. Extrae el primer elemento de una lista que NO puede ser vacia.
+Que sea una funcion parcial significa que no esta definida para todo posible argumento del tipo de entrada que toma.
+
+La funcion tail es de tipo tail :: HasCallStack => [a] -> [a] , es tambien una funcion parcial y su funcionalidad es extraer todos los elementos de 
+una lista excepto el primero.
+
+La funcion init es de tipo init :: HasCallStack => [a] -> [a], es parcial y su funcionalidad es devolver todos los elementos de una lista salvo el primero.
+
+La funcion last es de tipo last :: HasCallStack => [a] -> a, es parcial y su funcionalidad es extraer el ultimo elemento de una lista.
+
+La funcion take es de tipo take :: Int -> [a] -> [a], su funcionalidad es tomar un numero entero n y una lista xs para devolver los primeros n elementos de esa lista xs.
+Si n es mayor o igual a xs entonces se devuelve todo xs. 
+
+La funcion drop es de tipo drop :: Int -> [a] -> [a], toma un entero n y una lista xs y devuelve los |xs|-n elementos despues del elemento numero n. 
+Si n es mayor o igual a xs entonces se devuelve una lista vacia.
+
+La funcion (++) es de tipo (++) :: [a] -> [a] -> [a] y concatena dos listas
+
+La funcion concat es de tipo concat :: Foldable t => t [a] -> [a]  y concatena los elementos de listas de igual tipo en una sola lista
+
+La funcion reverse es de tipo reverse :: [a] -> [a]  y toma una lista xs y la devuelve pero con los elementos en orden inverso al original.
+
+La funcion elem es de tipo elem :: Eq a => a -> t a -> Bool y toma una estructura y un elemento y verifica si ese elemento pertenece a la estructura.
+
