@@ -1,12 +1,8 @@
-import GHC.Base (BCO)
-import System.Win32 (xBUTTON1)
 valorAbsoluto :: Float -> Float 
-
 valorAbsoluto x | x > 0 = x
                 | otherwise = -x
 
 bisiesto :: Int -> Bool 
-
 bisiesto x | mod x 4 == 0 = True
            | otherwise = False
 
@@ -59,7 +55,7 @@ difPromedio2Aux :: [Float] -> Float -> [Float]
 difPromedio2Aux [] _ = []
 difPromedio2Aux (x:xs) promedio = (x - promedio) : difPromedio2Aux (xs) promedio 
 
-difPromedio2 :: [Float] -> [Float]
+difPromedio2 :: [Float] -> [Float] -- difPromedio usando recursion
 difPromedio2 [] = []
 difPromedio2 x = difPromedio2Aux x (promedio x)
 
@@ -69,15 +65,15 @@ todosIguales [x] = True
 todosIguales (x:y:xs) | x == y && todosIguales(y:xs) = True
                       | otherwise = False
 
-data AB a = Nil | Bin (AB a) a (AB a)
+data AB a = Nil | Bin (AB a) a (AB a) -- modelo de arbol binario dado en la guia
 
 vacioAB :: AB a -> Bool 
 vacioAB Nil = True
-vacioAB _ = False
+vacioAB _ = False 
 
 negacionAB :: AB Bool -> AB Bool
 negacionAB Nil = Nil
-negacionAB (Bin izq a der) = Bin (negacionAB izq) (not a) (negacionAB der)
+negacionAB (Bin izq a der) = Bin (negacionAB izq) (not a) (negacionAB der) --Aplica la funcion de su parent recursivamente
 
 productoAB :: AB Int -> Int 
 productoAB Nil = 0
@@ -89,5 +85,5 @@ productoLista (x:xs) = x * productoLista(xs)
 
 inorden :: AB Int -> [Int]
 inorden Nil = []
-inorden (Bin izq a der) = (inorden izq) ++ [a] ++ (inorden der)
+inorden (Bin izq a der) = (inorden izq) ++ [a] ++ (inorden der) -- No necesito armar un arbol sino una lista, asi que concateno en orden inorden (de izq a raiz a derecha)
 
