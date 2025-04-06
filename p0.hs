@@ -65,7 +65,80 @@ todosIguales [x] = True
 todosIguales (x:y:xs) | x == y && todosIguales(y:xs) = True
                       | otherwise = False
 
+sumaN :: Int -> [Int] -> [Int]
+sumaN k xs = [d + k | d <- xs]
+
+aparece :: Int -> [Int] -> Bool
+aparece _ [] = False
+aparece y (x:xs) | y == x = True
+                 | otherwise = aparece y xs 
+
+ordenar :: [Int] -> [Int]
+ordenar [] = []
+ordenar (x:xs) = insertar x (ordenar xs) 
+
+insertar :: Int -> [Int] -> [Int]
+insertar x [] = [x]
+insertar x (y:ys) | x > y = y : x : ys 
+                  | otherwise = y : insertar x ys 
+
+data Direccion = Norte | Este | Sur | Oeste 
+opuesta :: Direccion -> Direccion
+opuesta Norte = Sur
+opuesta Sur = Norte
+opuesta Este = Oeste
+opuesta Oeste = Este
+
+--data Maybe a = Nothing | Just a
 data AB a = Nil | Bin (AB a) a (AB a) -- modelo de arbol binario dado en la guia
+
+buscar :: Eq a => a -> AB (a, b) -> Maybe b
+buscar _ Nil = Nothing
+buscar k (Bin izq (a, b) der) | k == a = Just b 
+                              | otherwise = case buscar k izq of 
+                                    Just valor -> Just valor -- Si encuentra a k, devuelve su valor asociado 
+                                    Nothing -> buscar k der  -- Si no encuentra nada, que vaya por la rama derecha
+
+buscar2 :: Eq a => a -> AB (a, b) -> Maybe b
+buscar2 _ Nil = Nothing
+buscar2 k (Bin izq (a, b) der) | k == a = Just b
+                               | isNothing (buscar2 k izq) = buscar2 k der
+                               | otherwise = buscar2 k izq
+
+ordenTotal :: Ord a => a -> a -> Bool
+ordenTotal x y | x > y = True
+               | otherwise = False
+
+merge :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+merge f x [] = x
+merge f [] x = x
+merge f (x:xs) (y:ys) | f x y = x : merge f xs (y:ys)
+                      | otherwise = y : merge f (x:xs) ys
+
+mergeSort :: (a -> a -> Bool) -> [a] -> [a]
+mergeSort _ [] = []
+mergeSort f (x:xs) = merge f (mergeSort f left) (mergeSort f right)
+    where 
+        (left, right) = splitInTwo (x:xs)
+
+splitInTwo :: [a] -> ([a],[a])
+splitInTwo [] = ([], [])
+splitInTwo [x] = ([x], [])
+splitInTwo [x, y] = ([x], [y])
+splitInTwo (x:y:xs) = (x:xs1, y: xs2)
+    where 
+        (xs1, xs2) = splitInTwo xs
+
+dividir :: [a] -> ([a],[a])
+dividir [] = ([],[])
+dividir [x] = ([x],[])
+dividir xs = (take n xs, drop n xs)
+    where n = div (length xs) 2 
+
+mergeSort2 :: (a -> a -> Bool) -> [a] -> [a]
+mergeSort2 _ [] = []
+mergeSort2 f xs = merge f (mergeSort2 f left) (mergeSort2 f right)
+    where (left, right) = dividir xs 
 
 vacioAB :: AB a -> Bool 
 vacioAB Nil = True
@@ -86,4 +159,10 @@ productoLista (x:xs) = x * productoLista(xs)
 inorden :: AB Int -> [Int]
 inorden Nil = []
 inorden (Bin izq a der) = (inorden izq) ++ [a] ++ (inorden der) -- No necesito armar un arbol sino una lista, asi que concateno en orden inorden (de izq a raiz a derecha)
+
+listTimes2 :: [Int] -> [Int]
+listTimes2 xs = [x * 2 | x <- xs]
+
+listSum :: [Int] -> [Int] -> [Int]
+listSum xs ys = zipWith (+) xs ys  -- Va sumando posicion por posicion
 
