@@ -24,6 +24,11 @@ foldAEB2 cHoja cBin t = case t of -- sigue siendo pattern matching pero aprovech
 
     where acc = foldAEB cHoja cBin
 
+recAEB :: (a -> b) -> (AEB a -> b -> a -> AEB a -> b -> b) -> AEB a -> b 
+recAEB cHoja cBin t = case t of
+    Hoja a -> cHoja a 
+    Bin izq r der -> cBin izq (recAEB cHoja cBin izq) r der (recAEB cHoja cBin der) -- Les paso ademas los subarboles izq y derechos
+
 insertarAEB :: Ord a => a -> AEB a -> AEB a  
 insertarAEB e = foldAEB (\x -> if e < x then Bin (Hoja e) x (Hoja x) else Bin (Hoja x) x (Hoja e)) (\recI r recD -> if e < r then Bin (insertarAEB e recI) r recD else Bin recI r (insertarAEB e recD))
 
@@ -38,6 +43,9 @@ ramas = foldAEB (\x -> [[x]]) (\recI r recD -> (map (r:) recI) ++ (map (r:) recD
 
 altura :: AEB a -> Int
 altura = foldAEB (const 1) (\recI _ recD -> 1 + max recI recD)
+
+mejorSegun :: (a -> a -> Bool) -> AEB a -> a 
+mejorSegun f = foldAEB () (\recI r recD -> if )
 
 take' :: [a] -> Int -> [a]
 take' [] = const []
@@ -64,6 +72,7 @@ foldPoli' cX cCte cSuma cProd p = case p of
     Cte k -> cCte k
     Suma p' q -> cSuma (foldPoli' cX cCte cSuma cProd p') (foldPoli' cX cCte cSuma cProd q)
     Prod p' q -> cProd (foldPoli' cX cCte cSuma cProd p') (foldPoli' cX cCte cSuma cProd q)
+
 
 evaluar :: Num a => a -> Polinomio a -> a
 evaluar e p = case p of
