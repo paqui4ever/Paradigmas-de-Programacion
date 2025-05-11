@@ -112,9 +112,14 @@ insertarOrdenado elem = recr (\x xs acc -> if elem < x then elem : x : xs else x
 mapPares :: (a -> a -> a) -> [(a,a)] -> [a]
 mapPares f = map (\(x,y) -> uncurry2 f (x,y))
 
---armarPares :: [a] -> [b] -> [(a, b)]
---armarPares = foldl (\acc x ->  ) []
+armarPares :: [a] -> [b] -> [(a, b)]
+armarPares = foldr (\x acc ys -> (x, head ys) : acc (tail ys) ) (const []) -- Me armo la lista con acc
 
---mapDoble :: (a -> b -> c) -> [a] -> [b] -> [c]
---mapDoble f = foldr (\x y acc -> (f x y) : acc) [] -- no puedo pasarle 3 argumentos a foldr
+mapDoble :: (a -> b -> c) -> [a] -> [b] -> [c]
+mapDoble f = foldr (\x acc ys -> (f x (head ys)) : acc (tail ys)) (const []) -- Lo mismo que para armarPares
 
+sumaMat :: [[Int]] -> [[Int]] -> [[Int]]
+sumaMat = zipWith (zipWith (+)) -- zipWith (+) suma dos filas elemento a elemento, como lo quiero hacer fila a fila, hago otro zipWith
+
+--trasponer :: [[Int]] -> [[Int]]
+--trasponer = 
