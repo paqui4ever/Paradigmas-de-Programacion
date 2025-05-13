@@ -123,3 +123,123 @@ sumaMat = zipWith (zipWith (+)) -- zipWith (+) suma dos filas elemento a element
 
 --trasponer :: [[Int]] -> [[Int]]
 --trasponer = 
+
+-- Antes del parcial
+
+take1 :: Int -> [a] -> [a]
+take1 n = reverse . foldl (\acc x -> if n == length acc then acc else x:acc) []
+
+take2 :: Int -> [a] -> [a]
+take2 n = reverse . foldr (\x acc -> if n == length acc then acc else acc ++ [x]) []
+
+take'' :: [Int] -> Int -> [Int]
+take'' = foldr (\x acc -> \n -> if n==0 then [] else x : acc (n-1)) (const [])
+
+data AEB a = Hoja a | Bin (AEB a) a (AEB a)
+
+foldAEB :: (a -> b) -> (b -> a -> b -> b) -> AEB a -> b 
+foldAEB cHoja cBin (Hoja e) = cHoja e -- Si nos encontramos una hoja aplicamos la funcion a esa hoja
+foldAEB cHoja cBin (Bin izq x der) = cBin (acc izq) x (acc der) -- Si nos encontramos un subarbol, aplicamos el caso Bin con 
+                                                                -- el acumulador respectivo para los subarboles
+    where acc = foldAEB cHoja cBin 
+
+recAEB2 :: (a -> b) -> (AEB a -> b -> a -> AEB a -> b -> b) -> AEB a -> b 
+                    -- b -> a -> b -> b de normal, con estructural
+recAEB2 cHoja cBin t = case t of 
+    Hoja a -> cHoja a 
+    Bin i r d -> cBin i (recAEB2 cHoja cBin i) r d (recAEB2 cHoja cBin d)
+
+
+repetidosAEB :: Eq a => AEB a -> [a]
+repetidosAEB = recAEB2 (const [])(\i recI r d recD -> if elemAEB r i || elemAEB r d then r : recI ++ recD else recI ++ recD)
+
+elemAEB :: Eq a => a -> AEB a -> Bool
+elemAEB e = foldAEB (\x -> x == e) (\recI r recD -> r == e || recI || recD) 
+
+esABB :: Ord a => AEB a -> Bool
+esABB = recAEB2 (const True)(\i recI r d recD -> if head(inorder i) > r || head(inorder d) > r then False else recI || recD)
+
+inorder :: AEB a -> [a]
+inorder = foldAEB (\x -> [x]) (\recI r recD -> recI ++ [r] ++ recD)
+
+data Buffer a = Empty | Write Int a (Buffer a)| Read Int (Buffer a)
+
+foldBuffer :: b -> (Int -> a -> b -> b) -> (Int -> b -> b) -> Buffer a -> b 
+foldBuffer cEmpty cWrite cRead t = case t of 
+    Empty -> cEmpty
+    Write n x b -> cWrite n x (foldBuffer cEmpty cWrite cRead b)
+    Read n b -> cRead n (foldBuffer cEmpty cWrite cRead b)
+
+recBuffer :: b -> (Int -> a -> Buffer a -> b -> b) -> (Int -> Buffer a -> b -> b) -> Buffer a -> b 
+recBuffer cEmpty cWrite cRead t = case t of 
+    Empty -> cEmpty
+    Write n x b -> cWrite n x b (recBuffer cEmpty cWrite cRead b)
+    Read n b -> cRead n b (recBuffer cEmpty cWrite cRead b)
+
+posicionesOcupadas :: Buffer a -> [Int]
+posicionesOcupadas = recBuffer [] (\pos elemento buffer recB-> if notElem pos recB then pos : recB else recB) (\pos buffer recB -> removeLista pos recB)
+
+removeLista :: Eq a => a -> [a] -> [a]
+removeLista e = recr (\x xs acc -> if x == e then xs else x:xs) []
+
+contenido :: Int -> Buffer a -> Maybe a 
+contenido n = recBuffer Nothing (\pos elemento buffer recB -> if pos == n then Just elemento else recB) (\pos buffer recB -> Nothing)
+
+contenido' :: Int -> Buffer a -> Maybe a 
+contenido' n = foldBuffer Nothing (\pos elemento recB -> if pos == n then Just elemento else recB) (\pos recB -> Nothing) 
+
+puedeCompletarLecturas :: Buffer a -> Bool 
+puedeCompletarLecturas = recBuffer False (\pos elemento buffer recB -> True) (\pos buffer recB -> recB && elem pos (posicionesOcupadas buffer))
+
+deshacer :: Buffer a -> Int -> Buffer a 
+deshacer = recBuffer (const Empty) (\pos elemento buffer recB -> \e -> if e == 0 then Write pos elemento buffer else recB (e - 1))(\pos buffer recB -> \e -> if e == 0 then Read pos buffer else recB (e-1))
+-- Tomo un e que es mi numero de pasos que quiero retroceder y voy yendo para atras aprovechandome de aplicaciones parciales con recB (una funcion de Int -> Buffer)
+
+data AT a = NilT | Tri a (AT a) (AT a) (AT a)
+
+foldAT :: b -> (a -> b -> b -> b -> b) -> AT a -> b 
+foldAT cNil cTri t = case t of
+    NilT -> cNil
+    Tri x ri rm rd -> cTri x (acc ri) (acc rm) (acc rd)
+
+    where acc = foldAT cNil cTri 
+
+preorder :: AT a -> [a]
+preorder = foldAT [] (\x ri rm rd -> [x] ++ ri ++ rm ++ rd)
+
+mapAT :: (a -> b) -> AT a -> AT b 
+mapAT f = foldAT NilT (\x ri rm rd -> Tri (f x) ri rm rd)
+
+nivel :: AT a -> Int -> [a]
+nivel = foldAT (const []) (\x ri rm rd -> \e -> if e == 0 then [x] else ri (e-1) ++ rm (e-1) ++ rd (e-1)) 
+-- cuando llegamos a e-1 == 0 es porque estamos en el nivel deseado (porque vamos de derecha a izq) y por tanto devolvemos los [x] de ese nivel
+
+data Cola a = VaciaT | Cons a (Cola a) 
+
+proximoC :: Cola a -> a 
+proximoC VaciaT = undefined
+proximoC (Cons x VaciaT) = x 
+proximoC (Cons _ queue) = proximoC queue 
+
+foldCola :: b -> (a -> b -> b) -> Cola a -> b 
+foldCola cVacia cCola q = case q of 
+    VaciaT -> cVacia
+    Cons x queue -> cCola x (acc queue)
+
+    where acc = foldCola cVacia cCola 
+
+lengthCola :: Cola a -> Int 
+lengthCola = foldCola 0 (\x recQ -> 1 + recQ)
+
+foldlCola :: (b -> a -> b) -> b -> Cola a -> b 
+foldlCola cCola cVacia q = case q of -- es como foldlCola f acc q donde f es cCola y acc es cVacia
+    VaciaT -> cVacia
+    Cons x queue -> foldlCola cCola (cCola cVacia x) queue
+
+proximoCF :: Cola a -> Maybe a 
+proximoCF = foldlCola (\recQ x -> Just x) Nothing 
+
+desencolar :: Cola a -> Cola a
+desencolar = foldCola VaciaT (\x recQ -> case recQ of 
+                                        VaciaT -> VaciaT -- Como llegamos al primero agregado, no lo volvemos a agregar
+                                        _ -> Cons x recQ) -- Vamos agregando todos
