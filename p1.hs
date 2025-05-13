@@ -246,4 +246,5 @@ desencolar = foldCola VaciaT (\x recQ -> case recQ of
 
 desencolarR :: Cola a -> Cola a
 desencolarR VaciaT = VaciaT
-desencolarR (Cons _ queue) = desencolarR queue
+desencolarR (Cons x queue) = Cons x (desencolarR queue)
+desencolarR (Cons _ VaciaT) = VaciaT
