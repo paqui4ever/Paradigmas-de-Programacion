@@ -243,3 +243,7 @@ desencolar :: Cola a -> Cola a
 desencolar = foldCola VaciaT (\x recQ -> case recQ of 
                                         VaciaT -> VaciaT -- Como llegamos al primero agregado, no lo volvemos a agregar
                                         _ -> Cons x recQ) -- Vamos agregando todos
+
+desencolarR :: Cola a -> Cola a
+desencolarR VaciaT = VaciaT
+desencolarR (Cons _ queue) = desencolarR queue
