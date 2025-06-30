@@ -44,8 +44,8 @@ ramas = foldAEB (\x -> [[x]]) (\recI r recD -> (map (r:) recI) ++ (map (r:) recD
 altura :: AEB a -> Int
 altura = foldAEB (const 1) (\recI _ recD -> 1 + max recI recD)
 
-mejorSegun :: (a -> a -> Bool) -> AEB a -> a 
-mejorSegun f = foldAEB () (\recI r recD -> if )
+--mejorSegun :: (a -> a -> Bool) -> AEB a -> a 
+--mejorSegun f = foldAEB () (\recI r recD -> if )
 
 take' :: [a] -> Int -> [a]
 take' [] = const []
