@@ -190,6 +190,9 @@ takeN n xs = foldr (\x acc n -> if n > 0 then x : acc (n-1) else acc (n-1)) (con
 
 --mismaFormaAB :: AB a -> AB a -> Bool 
 
+espejo :: AB a -> AB a 
+espejo = recAB Nil (\recI i r recD d -> Bin d r i)
+
 filterAB :: (a -> Bool) -> AB a -> [a]
 filterAB p = foldAB [] (\recI r recD -> (if p r then [r] else []) ++ recI ++ recD)
 
@@ -283,7 +286,7 @@ tasks = recTaskList [] (\(Task s) _ recTL -> s : recTL) (\str tl recTL -> sacar 
 sacar :: String -> [String] -> [String]
 sacar str = foldr (\x acc -> if x == str then acc else x : acc) []
 
-deshacerTL :: Int -> TaskList -> 
+deshacerTL :: Int -> TaskList -> TaskList
 deshacerTL n tl = recTaskList (const EmptyT) (\t rest recTL n -> if n <= 0 then Add t rest else recTL (n - 1)) (\s rest recTL n -> if n <= 0 then Complete s rest else recTL (n - 1)) (\m rest recTL n -> if n <= 0 then Undo m rest else recTL (n - 1)) tl n   
 
 --deshacerTL :: Int -> TaskList -> [String]
@@ -300,3 +303,100 @@ sizeTL = foldTaskList 0 (\task recTL -> 1 + recTL) (\str recTL -> recTL + 1) (\n
 
 undoAll :: TaskList -> TaskList
 undoAll _ = EmptyT
+
+-- Parcial
+data ABNV a = Hoja a | Uni a (ABNV a) | Bi (ABNV a) a (ABNV a)
+
+-- a) 
+
+foldABNV :: (a -> b) -> (a -> b -> b) -> (b -> a -> b -> b) -> ABNV a -> b 
+foldABNV cHoja cUni cBi t = case t of 
+    Hoja x -> cHoja x 
+    Uni x t -> cUni x (acc t)
+    Bi t1 x t2 -> cBi (acc t1) x (acc t2)
+    where
+        acc = foldABNV cHoja cUni cBi
+
+recABNV :: (a -> b) -> (a -> ABNV a -> b -> b) -> (ABNV a -> b -> a -> ABNV a -> b -> b) -> ABNV a -> b 
+recABNV cHoja cUni cBi t = case t of 
+    Hoja x -> cHoja x 
+    Uni x t -> cUni x t (acc t)
+    Bi t1 x t2 -> cBi t1 (acc t1) x t2 (acc t2)
+    where
+        acc = recABNV cHoja cUni cBi
+
+-- b) 
+elemABNV :: Eq a => a -> ABNV a -> Bool 
+elemABNV e = foldABNV (==e) (\x recT -> x == e || recT) (\recT1 x recT2 -> x == e || recT1 || recT2)
+
+--c)
+reemplazarUno :: Eq a => a -> a -> ABNV a -> ABNV a 
+reemplazarUno x y = recAB (\r -> if r == x then Hoja y else Hoja r) (\r t recT -> if r == x then Uni y t else Uni r recT) (\t1 recT1 r t2 recT2 -> if r == x then Bi t1 y t2 else (if elemABNV x t1 then Bi recT1 r t2 else Bi t1 r recT2)) x y 
+
+-- d)
+nivel :: ABNV a -> Int -> [a]
+nivel t n = foldABNV (\x n -> if n == 0 then [x] else []) (\r recT n -> if n == 0 then [r] else recT (n-1)) (\recT1 r recT2 n -> if n == 0 then [r] else recT1 (n-1) ++ recT2 (n-1)) t n
+
+-- Recu 2do cuatri 2024
+data Operador = Sumar Int | DividirPor Int | Secuencia [Operador]
+
+--a)
+foldOperador :: (Int -> b) -> (Int -> b) -> ([b] -> b) -> Operador -> b 
+foldOperador cSuma cDividirPor cSecuencia op = case op of
+    Sumar n -> cSuma n 
+    DividirPor n -> cDividirPor n 
+    Secuencia lista -> cSecuencia (map acc lista)
+    where
+        acc = foldOperador cSuma cDividirPor cSecuencia
+
+recOperador :: (Int -> b) -> (Int -> b) -> ([Operador] -> [b] -> b) -> Operador -> b 
+recOperador cSuma cDividirPor cSecuencia op = case op of
+    Sumar n -> cSuma n 
+    DividirPor n -> cDividirPor n 
+    Secuencia lista -> cSecuencia lista (map acc lista)
+    where
+        acc = recOperador cSuma cDividirPor cSecuencia
+
+-- b) 
+falla :: Operador -> Bool 
+falla = foldOperador (const True) (/= 0) (\recL -> and recL)
+
+-- c) 
+aplanar :: Operador -> Operador
+aplanar = foldOperador (\x -> Sumar x) (\x -> DividirPor x) (\recL -> Secuencia (concatMap descomprimir recL))
+    where 
+        descomprimir (Secuencia xs) = xs 
+        descomprimir x = [x]
+
+-- d) 
+aplicar :: Operador -> Int -> Maybe Int 
+aplicar op n = foldOperador (\x n -> Just (x+n)) (\x n -> if x == 0 then Nothing else (Just (x / n))) (\recL n -> if recL == [] then Just n else head recL n) op n 
+
+-- Recu 1er cuatri 2023
+
+data Componente = Contenedor | Motor | Escudo | Cañon deriving Eq 
+data NaveEspacial = Modulo Componente NaveEspacial NaveEspacial | Base Componente deriving Eq 
+
+-- a)
+
+recNave :: (Componente -> b -> NaveEspacial -> b -> NaveEspacial -> b) -> (Componente -> b) -> NaveEspacial -> b 
+recNave cModulo cBase nave = case nave of 
+    Modulo comp n1 n2 -> cModulo comp (acc n1) n1 (acc n2) n2
+    Base comp -> cBase comp 
+    where
+        acc = recNave cModulo cBase 
+
+foldNave :: (Componente -> b -> b -> b) -> (Componente -> b) -> NaveEspacial -> b 
+foldNave cModulo cBase = recNave (\comp acc1 _ acc2 _ -> cModulo comp acc1 acc2) cBase
+
+-- b)
+espejoN :: NaveEspacial -> NaveEspacial
+espejoN = recNave (\comp acc1 n1 acc2 n2 -> Modulo comp n2 n1) Base
+
+--c)
+esSubnavePropia :: NaveEspacial -> NaveEspacial -> Bool 
+esSubnavePropia n2 = recNave (\comp1 acc1 n1 acc2 n2 m-> Modulo comp1 n1 n2 == m || acc1 m || acc2 m) (\comp n2 -> Base comp == n2) n2 
+
+-- d) 
+truncar :: NaveEspacial -> Integer -> NaveEspacial 
+truncar n = foldNave (\comp1 acc1 acc2 n -> if n == 0 then Base comp1 else (Modulo comp1 (acc1 (n-1)) (acc2 (n-1)))) (\comp1 -> const (Base comp1)) n
